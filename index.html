@@ -1,9 +1,16 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>탐험대 유형 테스트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-/* Layout: one ticket-shaped column for students; wider two-pane desk for the teacher tab. Four ride-type colors carry all meaning. */
+/* Layout & Colors */
 :root {
   --bg: #eef2f8;
   --surface: #ffffff;
@@ -28,19 +35,13 @@
     color-scheme: dark;
   }
 }
-:root[data-theme="dark"] {
-  --bg: #0e1526; --surface: #17213a; --ink: #eaf0ff; --muted: #9db0d1; --line: #2b3a5c;
-  --brand: #7f9bff; --brand-ink: #0e1526;
-  --t-a: #ff7a63; --t-b: #7ea3ff; --t-c: #3fd1bb; --t-d: #f2bd3d;
-  color-scheme: dark;
-}
 * { box-sizing: border-box; }
 body {
   background: var(--bg); color: var(--ink); font-family: var(--font-body);
   font-size: 16px; line-height: 1.6; padding-inline: 16px; padding-block: 20px 48px;
-  word-break: keep-all; overflow-wrap: anywhere;
+  word-break: keep-all; overflow-wrap: anywhere; margin: 0;
 }
-h1, h2, h3 { font-family: var(--font-display); font-weight: 400; line-height: 1.25; margin: 0; text-wrap: balance; }
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; line-height: 1.25; margin: 0; text-wrap: balance; }
 p { margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -55,7 +56,7 @@ button { cursor: pointer; }
 .tabs button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font-size: 14px; color: var(--muted); }
 .tabs button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 
-/* ticket */
+/* Ticket UI */
 .ticket { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; position: relative; padding: 24px 22px; }
 .ticket.stub-top { padding-top: 22px; }
 .perf { height: 0; border-top: 2px dashed var(--line); margin: 20px -22px; position: relative; }
@@ -74,18 +75,18 @@ button { cursor: pointer; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
 .seg label { display: grid; place-items: center; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; background: var(--bg); font-weight: 700; cursor: pointer; }
 .seg input:checked + label { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 14%, var(--surface)); }
-.seg input:focus-visible + label { outline: 3px solid var(--brand); outline-offset: 2px; }
 .seg > div { position: relative; }
 
 .btn { min-height: 48px; padding: 10px 20px; border-radius: 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--bg); font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .btn.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
 .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.danger { background: #d93a21; border-color: #d93a21; color: #ffffff; }
 .btn.sm { min-height: 38px; padding: 6px 14px; font-size: 14px; border-radius: 10px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn.block { width: 100%; margin-top: 22px; }
 .err { color: var(--t-a); font-size: 14px; margin-top: 10px; min-height: 1.4em; }
 
-/* punches */
+/* Punches & Questions */
 .punches { display: flex; gap: 6px; margin-bottom: 18px; }
 .punches span { flex: 1; height: 8px; border-radius: 4px; background: var(--line); }
 .punches span.on { background: var(--brand); }
@@ -99,7 +100,7 @@ button { cursor: pointer; }
 .opt[aria-pressed="true"] b { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
 .navrow { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
 
-/* result */
+/* Result Screen */
 .result { --c: var(--t-a); }
 .result[data-type="B"] { --c: var(--t-b); } .result[data-type="C"] { --c: var(--t-c); } .result[data-type="D"] { --c: var(--t-d); }
 .badge { width: 72px; height: 72px; border-radius: 22px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 16%, var(--surface)); color: var(--c); border: 2px solid var(--c); }
@@ -113,7 +114,7 @@ button { cursor: pointer; }
 .code { font-family: var(--font-mono); font-size: 20px; font-weight: 700; letter-spacing: .04em; padding: 12px 14px; border: 2px dashed var(--line); border-radius: 12px; text-align: center; margin-top: 10px; user-select: all; }
 .status { font-size: 14px; color: var(--muted); margin-top: 10px; }
 
-/* teacher */
+/* Teacher Desk */
 .desk { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 820px) { .desk { grid-template-columns: minmax(0, 1fr); } }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
@@ -144,10 +145,19 @@ tr:last-child td { border-bottom: 0; }
 .chip small { margin-left: auto; font-size: 12px; color: var(--c); white-space: nowrap; font-weight: 700; }
 .note { padding: 10px 12px; border-radius: 10px; font-size: 14px; background: color-mix(in srgb, var(--t-d) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--t-d) 45%, var(--line)); }
 .note.ok { background: color-mix(in srgb, var(--t-c) 14%, var(--surface)); border-color: color-mix(in srgb, var(--t-c) 45%, var(--line)); }
-@media (prefers-reduced-motion: no-preference) {
-  .opt { transition: border-color .12s, background-color .12s; }
-}
+
+/* Lock Modal UI */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+.modal { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; width: 100%; max-width: 360px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+.modal h2 { font-size: 22px; margin-bottom: 8px; text-align: center; }
+.modal p { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 16px; }
+
+.status-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #9db0d1; }
+.status-dot.active { background: #0c8f7d; box-shadow: 0 0 8px #0c8f7d; }
 </style>
+</head>
+<body>
 
 <div class="wrap" id="shell">
   <div class="bar">
@@ -157,18 +167,27 @@ tr:last-child td { border-bottom: 0; }
       <button type="button" id="tabTeacher" aria-pressed="false">교사용</button>
     </div>
   </div>
+
   <main id="studentView"></main>
+
   <main id="teacherView" hidden>
     <div class="desk">
       <div style="display:grid;gap:20px;min-width:0">
         <section class="panel" aria-labelledby="h-roster">
-          <h2 id="h-roster">학생 결과</h2>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 id="h-roster">학생 결과</h2>
+            <button class="btn sm ghost" type="button" id="lockBtn">🔒 다시 잠그기</button>
+          </div>
+          <div class="status-indicator">
+            <span class="status-dot" id="syncDot"></span>
+            <span id="syncStatusText">연결 확인 중...</span>
+          </div>
           <div class="tally" id="tally"></div>
           <div id="rosterBox"></div>
-          <p class="hint" id="syncHint"></p>
         </section>
+
         <section class="panel" aria-labelledby="h-add">
-          <h2 id="h-add">결과 직접 넣기</h2>
+          <h2 id="h-add">결과 수동 추가</h2>
           <div class="row">
             <input class="input" id="addName" placeholder="이름" autocomplete="off" aria-label="이름">
             <select class="input" id="addGender" aria-label="성별" style="flex:0 0 84px"><option value="남">남</option><option value="여">여</option></select>
@@ -182,9 +201,9 @@ tr:last-child td { border-bottom: 0; }
             <textarea class="input" id="pasteBox" placeholder="한 줄에 한 명&#10;김하늘 여 B&#10;이도윤 남 A"></textarea>
             <button class="btn sm ghost" type="button" id="addMany" style="justify-self:start">붙여넣은 학생 추가</button>
           </div>
-          <p class="hint">학생 화면에 나오는 코드(이름 성별 알파벳)를 그대로 붙여넣으면 됩니다.</p>
         </section>
       </div>
+
       <div style="display:grid;gap:20px;min-width:0">
         <section class="panel" aria-labelledby="h-opt">
           <h2 id="h-opt">모둠 편성</h2>
@@ -197,13 +216,13 @@ tr:last-child td { border-bottom: 0; }
           <div class="field" style="margin-top:0">
             <label for="friendBox">같은 모둠이 되면 안 되는 친한 친구 (선택)</label>
             <textarea class="input" id="friendBox" placeholder="한 줄에 한 묶음&#10;김하늘 박서연&#10;이도윤, 최민준, 정우진"></textarea>
-            <p class="hint">한 줄에 적은 이름끼리는 서로 다른 모둠으로 나뉩니다. 이름은 결과 표와 똑같이 적어 주세요.</p>
           </div>
           <div class="row">
             <button class="btn primary" type="button" id="makeBtn">모둠 짜기</button>
             <span class="hint" id="makeHint"></span>
           </div>
         </section>
+
         <section class="panel" id="outPanel" hidden aria-live="polite">
           <div class="out-head">
             <h2>편성 결과</h2>
@@ -220,9 +239,41 @@ tr:last-child td { border-bottom: 0; }
   </main>
 </div>
 
+<!-- Password Lock Modal -->
+<div class="modal-overlay" id="lockModal" hidden>
+  <div class="modal">
+    <h2>교사 확인</h2>
+    <p>교사 전용 화면입니다. 비밀번호를 입력해 주세요.</p>
+    <div class="field">
+      <input type="password" class="input" id="pwdInput" placeholder="비밀번호 입력" autocomplete="off">
+    </div>
+    <p class="err" id="pwdErr" role="alert"></p>
+    <div class="row" style="margin-top:16px; justify-content:flex-end;">
+      <button class="btn ghost sm" type="button" id="pwdCancel">취소</button>
+      <button class="btn primary sm" type="button" id="pwdSubmit">확인</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function () {
   "use strict";
+
+  // --- SUPABASE CONFIGURATION ---
+  var SUPABASE_URL = "https://miedejroswgrjtjotoeu.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZWRlanJvc3dncmp0am90b2V1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMzA2MDUsImV4cCI6MjEwNjgwNjYwNX0.bSZnKRIZGKNaz66u-WuqV3bNUG-_NDY2PynLXE_6jlk";
+  var sbClient = null;
+
+  if (window.supabase) {
+    try {
+      sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (e) {
+      console.error("Supabase Initialization Error:", e);
+    }
+  }
+
+  var TEACHER_PWD = "1018";
+  var isTeacherUnlocked = false;
 
   var TYPES = {
     A: { key: "A", name: "스릴 대장", line: "무섭고 빠를수록 좋아! 도전 정신 만렙",
@@ -244,49 +295,26 @@ tr:last-child td { border-bottom: 0; }
   };
 
   var QS = [
-    { q: "놀이공원 입구에 도착했다! 제일 먼저 하는 일은?", o: {
-      A: "제일 무서워 보이는 놀이기구 쪽으로 일단 달려간다", B: "안내 지도를 펴서 오늘 코스를 짠다",
-      C: "예쁜 풍경과 캐릭터 가게를 둘러본다", D: "친구들과 \"우리 뭐부터 탈까?\" 의논한다" } },
-    { q: "인기 놀이기구 대기 시간이 90분이래! 내 생각은?", o: {
-      A: "무서운 거면 3시간도 기다릴 수 있다", B: "지금 말고 사람 적은 시간에 다시 오자",
-      C: "간식 먹고 구경하다 보면 금방 간다", D: "친구랑 수다 떨고 게임하면 시간이 순식간에 간다" } },
-    { q: "줄 서는 동안 나는 주로 뭘 하고 있을까?", o: {
-      A: "앞에서 나는 소리에 귀 기울이며 두근두근한다", B: "남은 시간을 계산하고 다음 계획을 생각한다",
-      C: "주변을 구경하거나 멍을 때린다", D: "앞뒤 사람들과도 말을 걸고 논다" } },
-    { q: "롤러코스터가 맨 꼭대기에 올라갔다. 이때 나는?", o: {
-      A: "\"와아아!\" 소리 지르며 두 손을 번쩍 든다", B: "안전바가 잘 잠겼는지 한 번 더 확인한다",
-      C: "눈을 지그시 감고 바람을 느낀다", D: "옆 사람 손을 잡고 같이 소리 지른다" } },
-    { q: "점심시간이다. 어떻게 먹고 싶어?", o: {
-      A: "빨리 먹고 하나라도 더 타러 가자! 핫도그를 들고 걸으며 먹는다", B: "미리 알아 둔 식당에서 정해진 시간에 먹는다",
-      C: "예쁜 카페나 벤치에서 천천히 먹는다", D: "다 같이 둘러앉아 나눠 먹으면 제일 맛있다" } },
-    { q: "같은 모둠 친구가 \"나 무서운 건 못 타\" 라고 한다. 나는?", o: {
-      A: "\"그럼 나만 타고 올게!\" 하고 혼자 간다", B: "둘 다 즐길 수 있는 놀이기구를 찾아본다",
-      C: "괜찮아, 같이 다른 거 타자. 무리하지 않는다", D: "친구가 용기 낼 수 있도록 응원해 준다" } },
-    { q: "갑자기 비가 내린다! 나는?", o: {
-      A: "비 맞으며 타는 놀이기구가 더 신난다!", B: "실내 놀이기구 위치부터 확인한다",
-      C: "우비 입고 사진 찍으며 분위기를 즐긴다", D: "다 같이 처마 밑에 모여 수다를 떤다" } },
-    { q: "모둠 친구들과 가고 싶은 곳이 달라졌다. 나는?", o: {
-      A: "내가 가고 싶은 곳으로 가자고 힘껏 주장한다", B: "가위바위보나 순서표로 공평하게 정하자고 한다",
-      C: "어디든 괜찮아, 친구들을 따라간다", D: "서로 이야기를 들어 보고 중간 지점을 찾는다" } },
-    { q: "놀이공원에서 꼭 사고 싶은 기념품은?", o: {
-      A: "가장 무서웠던 놀이기구 사진 (스릴 인증샷!)", B: "오늘 방문 기록을 남길 수 있는 작은 노트나 스탬프",
-      C: "귀여운 머리띠, 인형 같은 감성템", D: "친구들과 똑같이 맞춘 우정템" } },
-    { q: "집에 오는 버스 안에서의 나는?", o: {
-      A: "오늘 탄 것 중 최고를 꼽으며 아직도 흥분 상태", B: "오늘 몇 개 탔는지 세어 보고 다음엔 더 잘하겠다고 다짐한다",
-      C: "창밖을 보며 오늘 하루를 떠올리다 스르르 잠든다", D: "오늘 있었던 웃긴 일을 계속 이야기한다" } }
+    { q: "놀이공원 입구에 도착했다! 제일 먼저 하는 일은?", o: { A: "제일 무서워 보이는 놀이기구 쪽으로 일단 달려간다", B: "안내 지도를 펴서 오늘 코스를 짠다", C: "예쁜 풍경과 캐릭터 가게를 둘러본다", D: "친구들과 \"우리 뭐부터 탈까?\" 의논한다" } },
+    { q: "인기 놀이기구 대기 시간이 90분이래! 내 생각은?", o: { A: "무서운 거면 3시간도 기다릴 수 있다", B: "지금 말고 사람 적은 시간에 다시 오자", C: "간식 먹고 구경하다 보면 금방 간다", D: "친구랑 수다 떨고 게임하면 시간이 순식간에 간다" } },
+    { q: "줄 서는 동안 나는 주로 뭘 하고 있을까?", o: { A: "앞에서 나는 소리에 귀 기울이며 두근두근한다", B: "남은 시간을 계산하고 다음 계획을 생각한다", C: "주변을 구경하거나 멍을 때린다", D: "앞뒤 사람들과도 말을 걸고 논다" } },
+    { q: "롤러코스터가 맨 꼭대기에 올라갔다. 이때 나는?", o: { A: "\"와아아!\" 소리 지르며 두 손을 번쩍 든다", B: "안전바가 잘 잠겼는지 한 번 더 확인한다", C: "눈을 지그시 감고 바람을 느낀다", D: "옆 사람 손을 잡고 같이 소리 지른다" } },
+    { q: "점심시간이다. 어떻게 먹고 싶어?", o: { A: "빨리 먹고 하나라도 더 타러 가자! 핫도그를 들고 걸으며 먹는다", B: "미리 알아 둔 식당에서 정해진 시간에 먹는다", C: "예쁜 카페나 벤치에서 천천히 먹는다", D: "다 같이 둘러앉아 나눠 먹으면 제일 맛있다" } },
+    { q: "같은 모둠 친구가 \"나 무서운 건 못 타\" 라고 한다. 나는?", o: { A: "\"그럼 나만 타고 올게!\" 하고 혼자 간다", B: "둘 다 즐길 수 있는 놀이기구를 찾아본다", C: "괜찮아, 같이 다른 거 타자. 무리하지 않는다", D: "친구가 용기 낼 수 있도록 응원해 준다" } },
+    { q: "갑자기 비가 내린다! 나는?", o: { A: "비 맞으며 타는 놀이기구가 더 신난다!", B: "실내 놀이기구 위치부터 확인한다", C: "우비 입고 사진 찍으며 분위기를 즐긴다", D: "다 같이 처마 밑에 모여 수다를 떤다" } },
+    { q: "모둠 친구들과 가고 싶은 곳이 달라졌다. 나는?", o: { A: "내가 가고 싶은 곳으로 가자고 힘껏 주장한다", B: "가위바위보나 순서표로 공평하게 정하자고 한다", C: "어디든 괜찮아, 친구들을 따라간다", D: "서로 이야기를 들어 보고 중간 지점을 찾는다" } },
+    { q: "놀이공원에서 꼭 사고 싶은 기념품은?", o: { A: "가장 무서웠던 놀이기구 사진 (스릴 인증샷!)", B: "오늘 방문 기록을 남길 수 있는 작은 노트나 스탬프", C: "귀여운 머리띠, 인형 같은 감성템", D: "친구들과 똑같이 맞춘 우정템" } },
+    { q: "집에 오는 버스 안에서의 나는?", o: { A: "오늘 탄 것 중 최고를 꼽으며 아직도 흥분 상태", B: "오늘 몇 개 탔는지 세어 보고 다음엔 더 잘하겠다고 다짐한다", C: "창밖을 보며 오늘 하루를 떠올리다 스르르 잠든다", D: "오늘 있었던 웃긴 일을 계속 이야기한다" } }
   ];
 
-  function useDb() { return (window.claude && window.claude.use) ? window.claude.use("db") : Promise.resolve(null); }
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   function svg(t) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + TYPES[t].icon + "</svg>"; }
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
-  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
-  function sid(name, g) { var s = g + "|" + name, h = 5381; for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return "s" + h.toString(16); }
+  function sid(name, g) { return g + "_" + name.replace(/\s+/g, ""); }
 
-  /* ---------- student ---------- */
-  var S = { step: -1, name: "", gender: "", answers: [], order: [], db: null };
-
+  /* ---------- STUDENT VIEW ---------- */
+  var S = { step: -1, name: "", gender: "", answers: [], order: [] };
   function newOrder() { S.order = QS.map(function () { return shuffle(["A", "B", "C", "D"]); }); }
 
   function renderStudent() {
@@ -331,12 +359,13 @@ tr:last-child td { border-bottom: 0; }
         '<button class="btn primary sm" type="button" id="nextBtn"' + (cur ? "" : " disabled") + ">" + (i === QS.length - 1 ? "결과 보기" : "다음") + "</button></div>" +
         "</section>";
       el.querySelectorAll(".opt").forEach(function (b) {
-        b.onclick = function () { S.answers[i] = b.getAttribute("data-t"); renderStudent(); var nb = $("nextBtn"); if (nb) nb.focus(); };
+        b.onclick = function () { S.answers[i] = b.getAttribute("data-t"); renderStudent(); };
       });
       $("prevBtn").onclick = function () { S.step--; renderStudent(); };
       $("nextBtn").onclick = function () { S.step++; if (S.step === QS.length) finish(); renderStudent(); };
       return;
     }
+
     var type = S.type, T = TYPES[type];
     el.innerHTML =
       '<section class="ticket result" data-type="' + type + '">' +
@@ -348,12 +377,12 @@ tr:last-child td { border-bottom: 0; }
       '<div class="r-role"><h3>우리 모둠에서 나는</h3><p>' + T.role + "</p></div>" +
       '<div class="perf"></div>' +
       '<p class="eyebrow">내 탐험대 코드</p>' +
-      '<div class="code" id="codeBox">' + esc(S.name) + " " + S.gender + " " + type + "</div>" +
-      '<p class="status" id="saveStatus" role="status"></p>' +
+      '<div class="code">' + esc(S.name) + " " + S.gender + " " + type + "</div>" +
+      '<p class="status" id="saveStatus" role="status">선생님 화면으로 제출 중...</p>' +
       '<div class="row" style="margin-top:16px"><button class="btn ghost sm" type="button" id="redo">처음부터 다시 하기</button></div>' +
       "</section>";
     $("redo").onclick = function () { S.step = -1; S.answers = []; renderStudent(); };
-    $("saveStatus").textContent = S.saveMsg || "";
+    saveResultToSupabase();
   }
 
   function finish() {
@@ -362,106 +391,146 @@ tr:last-child td { border-bottom: 0; }
     var max = Math.max(c.A, c.B, c.C, c.D);
     var tops = ["A", "B", "C", "D"].filter(function (t) { return c[t] === max; });
     S.type = tops.length === 1 ? tops[0] : (tops.indexOf(S.answers[9]) >= 0 ? S.answers[9] : tops[0]);
-    S.saveMsg = "선생님께 위 코드를 알려 주세요.";
-    saveResult();
   }
 
-  function saveResult() {
-    var row = { name: S.name, gender: S.gender, type: S.type, at: Date.now() };
-    useDb().then(function (db) {
-      if (!db) return;
-      return db.doc("results/" + sid(S.name, S.gender)).set(row).then(function () {
-        S.saveMsg = "선생님 화면에 전달됐어요. 위 코드는 참고로 적어 두세요.";
-        var s = $("saveStatus"); if (s) s.textContent = S.saveMsg;
+  function saveResultToSupabase() {
+    if (!sbClient) {
+      var s = $("saveStatus"); if (s) s.textContent = "Supabase 설정이 필요합니다.";
+      return;
+    }
+    var row = { id: sid(S.name, S.gender), name: S.name, gender: S.gender, type: S.type };
+    sbClient.from("results").upsert(row).then(function (res) {
+      var s = $("saveStatus");
+      if (res.error) {
+        if (s) s.textContent = "저장 중 오류 발생: " + res.error.message;
+      } else {
+        if (s) s.textContent = "선생님 화면에 동기화되었습니다! 위 코드는 저장용입니다.";
+      }
+    });
+  }
+
+  /* ---------- TEACHER VIEW & SUPABASE SYNC ---------- */
+  var T = { results: [], friends: "", groups: null, isSubscribed: false };
+
+  function fetchResults() {
+    if (!sbClient) return;
+    sbClient.from("results").select("*").order("created_at", { ascending: true })
+      .then(function (res) {
+        if (!res.error && res.data) {
+          T.results = res.data;
+          renderRoster();
+        }
       });
-    }).catch(function () {});
   }
 
-  /* ---------- teacher ---------- */
-  var T = { manual: [], remote: [], friends: "", groups: null, subscribed: false };
-  try { T.manual = JSON.parse(store("expl.manual") || "[]") || []; } catch (e) { T.manual = []; }
-  T.friends = store("expl.friends") || "";
+  function subscribeRealtime() {
+    if (T.isSubscribed || !sbClient) return;
+    T.isSubscribed = true;
 
-  function saveManual() { store("expl.manual", JSON.stringify(T.manual)); }
-  function roster() {
-    var map = {};
-    T.remote.forEach(function (r) { map[r.gender + "|" + r.name] = { name: r.name, gender: r.gender, type: r.type, src: "학생 제출" }; });
-    T.manual.forEach(function (r) { map[r.gender + "|" + r.name] = { name: r.name, gender: r.gender, type: r.type, src: r.example ? "예시" : "직접 입력" }; });
-    return Object.keys(map).map(function (k) { return map[k]; }).sort(function (a, b) { return a.gender === b.gender ? a.name.localeCompare(b.name, "ko") : (a.gender === "남" ? -1 : 1); });
+    sbClient.channel("public:results")
+      .on("postgres_changes", { event: "*", schema: "public", table: "results" }, function (payload) {
+        fetchResults();
+      })
+      .subscribe(function (status) {
+        var dot = $("syncDot");
+        var text = $("syncStatusText");
+        if (status === "SUBSCRIBED") {
+          if (dot) dot.classList.add("active");
+          if (text) text.textContent = "실시간 동기화 중";
+        } else {
+          if (dot) dot.classList.remove("active");
+          if (text) text.textContent = "동기화 연결 대기";
+        }
+      });
   }
 
   function renderRoster() {
-    var rs = roster(), cnt = { A: 0, B: 0, C: 0, D: 0 };
-    rs.forEach(function (r) { cnt[r.type]++; });
+    var rs = T.results, cnt = { A: 0, B: 0, C: 0, D: 0 };
+    rs.forEach(function (r) { if (cnt[r.type] !== undefined) cnt[r.type]++; });
     $("tally").innerHTML = ["A", "B", "C", "D"].map(function (t) {
       return '<div data-t="' + t + '"><b>' + cnt[t] + "</b>" + TYPES[t].name + "</div>";
     }).join("");
+
     if (!rs.length) {
-      $("rosterBox").innerHTML = '<div class="empty"><p>아직 결과가 없어요. 학생들이 테스트를 마치면 여기에 나타나거나, 아래에서 직접 넣을 수 있어요.</p>' +
-        '<button class="btn sm" type="button" id="demoBtn">예시 학생 30명으로 체험해 보기</button></div>';
-      $("demoBtn").onclick = loadDemo;
+      $("rosterBox").innerHTML = '<div class="empty"><p>아직 제출된 결과가 없어요. 학생들이 제출하면 자동으로 동기화됩니다.</p></div>';
       return;
     }
+
     var m = rs.filter(function (r) { return r.gender === "남"; }).length;
     $("rosterBox").innerHTML =
       '<p class="hint" style="margin-bottom:8px">총 ' + rs.length + "명 (남 " + m + " · 여 " + (rs.length - m) + ")</p>" +
-      '<div class="tablewrap"><table><thead><tr><th>이름</th><th>성별</th><th>유형</th><th>출처</th><th></th></tr></thead><tbody>' +
+      '<div class="tablewrap"><table><thead><tr>' +
+      '<th style="width:30px"><input type="checkbox" id="selectAll"></th>' +
+      '<th>이름</th><th>성별</th><th>유형</th><th></th></tr></thead><tbody>' +
       rs.map(function (r, i) {
-        return '<tr data-t="' + r.type + '"><td>' + esc(r.name) + "</td><td>" + r.gender + '</td><td><span class="dot"></span>' + TYPES[r.type].name + "</td><td>" + r.src +
-          '</td><td><button class="x" type="button" data-del="' + i + '" aria-label="' + esc(r.name) + ' 삭제">×</button></td></tr>';
+        return '<tr data-t="' + r.type + '">' +
+          '<td><input type="checkbox" class="row-check" data-id="' + r.id + '"></td>' +
+          '<td>' + esc(r.name) + '</td><td>' + r.gender + '</td><td><span class="dot"></span>' + TYPES[r.type].name + '</td>' +
+          '<td><button class="x" type="button" data-del="' + r.id + '" aria-label="' + esc(r.name) + ' 삭제">×</button></td></tr>';
       }).join("") + "</tbody></table></div>" +
-      '<div class="row" style="margin-top:8px"><button class="btn sm ghost" type="button" id="clearBtn">전체 지우기</button></div>';
+      '<div class="row" style="margin-top:12px; gap:8px;">' +
+      '<button class="btn sm ghost" type="button" id="deleteSelectedBtn">선택 항목 삭제</button>' +
+      '<button class="btn sm danger" type="button" id="clearBtn">전체 지우기</button>' +
+      '</div>';
+
+    var selectAll = $("selectAll");
+    if (selectAll) {
+      selectAll.onchange = function () {
+        var checks = $("rosterBox").querySelectorAll(".row-check");
+        checks.forEach(function (c) { c.checked = selectAll.checked; });
+      };
+    }
+
     $("rosterBox").querySelectorAll("[data-del]").forEach(function (b) {
-      b.onclick = function () { removeRow(rs[+b.getAttribute("data-del")]); };
+      b.onclick = function () { removeResult([b.getAttribute("data-del")]); };
     });
+
+    $("deleteSelectedBtn").onclick = function () {
+      var checked = $("rosterBox").querySelectorAll(".row-check:checked");
+      var ids = Array.from(checked).map(function (c) { return c.getAttribute("data-id"); });
+      if (!ids.length) { alert("삭제할 학생을 선택해 주세요."); return; }
+      if (confirm(ids.length + "명의 결과를 삭제하시겠습니까?")) removeResult(ids);
+    };
+
     $("clearBtn").onclick = function () {
-      T.manual = []; saveManual();
-      var rem = T.remote.slice();
-      useDb().then(function (db) { if (db) rem.forEach(function (r) { db.doc("results/" + sid(r.name, r.gender)).delete().catch(function () {}); }); });
-      T.remote = []; renderRoster();
+      if (confirm("모든 학생 결과를 정말 지우시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+        var allIds = rs.map(function (r) { return r.id; });
+        removeResult(allIds);
+      }
     };
   }
 
-  function removeRow(r) {
-    T.manual = T.manual.filter(function (m) { return !(m.name === r.name && m.gender === r.gender); }); saveManual();
-    T.remote = T.remote.filter(function (m) { return !(m.name === r.name && m.gender === r.gender); });
-    useDb().then(function (db) { if (db) db.doc("results/" + sid(r.name, r.gender)).delete().catch(function () {}); });
-    renderRoster();
+  function removeResult(ids) {
+    if (!sbClient || !ids.length) return;
+    sbClient.from("results").delete().in("id", ids).then(function (res) {
+      fetchResults();
+    });
   }
 
   function upsertManual(rows) {
-    rows.forEach(function (r) {
-      T.manual = T.manual.filter(function (m) { return !(m.name === r.name && m.gender === r.gender); });
-      T.manual.push(r);
+    if (!sbClient || !rows.length) return;
+    var payload = rows.map(function (r) {
+      return { id: sid(r.name, r.gender), name: r.name, gender: r.gender, type: r.type };
     });
-    saveManual(); renderRoster();
+    sbClient.from("results").upsert(payload).then(function () {
+      fetchResults();
+    });
   }
 
   function parseLines(text) {
-    var rows = [], bad = 0;
+    var rows = [];
     text.split(/\r?\n/).forEach(function (line) {
       line = line.trim(); if (!line) return;
       var g = line.match(/[남여]/);
       var letter = null; var m = line.match(/(?:^|[\s,·|])([A-Da-d])(?:$|[\s,·|)])/); if (m) letter = m[1].toUpperCase();
       var name = line.split(/[\s,·|]+/)[0];
-      if (!g || !letter || !name || /^[남여]$/.test(name)) { bad++; return; }
+      if (!g || !letter || !name || /^[남여]$/.test(name)) return;
       rows.push({ name: name, gender: g[0], type: letter });
     });
-    return { rows: rows, bad: bad };
+    return rows;
   }
 
-  function loadDemo() {
-    var m = ["이도윤", "김민준", "박서준", "최하준", "정지호", "강시우", "조예준", "윤주원", "장건우", "임현우", "한지후", "오유찬", "서지훈", "신도현", "권태윤"];
-    var f = ["김하늘", "이서연", "박지아", "최수아", "정하윤", "강지유", "조서아", "윤채원", "장다은", "임소율", "한예린", "오나윤", "서아린", "신유나", "권세아"];
-    var ty = ["A", "B", "C", "D"], rows = [];
-    shuffle(m).forEach(function (n, i) { rows.push({ name: n, gender: "남", type: ty[(i + (i > 7 ? 1 : 0)) % 4], example: true }); });
-    shuffle(f).forEach(function (n, i) { rows.push({ name: n, gender: "여", type: ty[(i * 3 + (i > 9 ? 1 : 0)) % 4], example: true }); });
-    T.manual = rows; saveManual();
-    $("friendBox").value = "이도윤 김민준\n김하늘 이서연"; T.friends = $("friendBox").value; store("expl.friends", T.friends);
-    renderRoster();
-  }
-
-  /* grouping */
+  /* Grouping Logic */
   function parseFriends(text) {
     var set = {};
     text.split(/\r?\n/).forEach(function (line) {
@@ -510,10 +579,9 @@ tr:last-child td { border-bottom: 0; }
     return best;
   }
 
-  function build() {
-    var rs = roster(), max = +$("sizeSel").value, fs = parseFriends($("friendBox").value);
-    T.friends = $("friendBox").value; store("expl.friends", T.friends);
-    if (!rs.length) { $("makeHint").textContent = "먼저 학생 결과를 넣어 주세요."; return; }
+  function buildGroups() {
+    var rs = T.results, max = +$("sizeSel").value, fs = parseFriends($("friendBox").value);
+    if (!rs.length) { $("makeHint").textContent = "먼저 학생 결과를 추가하거나 동기화를 기다려 주세요."; return; }
     $("makeHint").textContent = "";
     var out = { 남: null, 여: null }, notes = [], clash = 0;
     ["남", "여"].forEach(function (g) {
@@ -523,12 +591,12 @@ tr:last-child td { border-bottom: 0; }
       out[g].forEach(function (grp) {
         for (var i = 0; i < grp.length; i++) for (var j = i + 1; j < grp.length; j++) if (fs[[grp[i].name, grp[j].name].sort().join("|")]) clash++;
       });
-      if (list.length === 1) notes.push(g + "학생이 1명뿐이라 혼자 한 모둠이 됩니다. 다른 모둠에 합류시킬지 정해 주세요.");
+      if (list.length === 1) notes.push(g + "학생이 1명뿐이라 혼자 한 모둠이 됩니다.");
     });
     var fcount = Object.keys(fs).length;
     if (fcount) {
-      if (clash === 0) notes.unshift("친한 친구 " + fcount + "쌍이 모두 다른 모둠으로 나뉘었어요.");
-      else notes.unshift("친한 친구 " + clash + "쌍은 인원 때문에 같은 모둠을 피하지 못했어요. 직접 조정해 주세요.");
+      if (clash === 0) notes.unshift("친한 친구 " + fcount + "쌍이 모두 다른 모둠으로 나뉘었습니다.");
+      else notes.unshift("친한 친구 " + clash + "쌍은 인원상 같은 모둠에 배치되었습니다. 수동 조정을 권장합니다.");
     }
     T.groups = out;
     renderGroups(notes, clash === 0 && fcount > 0);
@@ -549,68 +617,79 @@ tr:last-child td { border-bottom: 0; }
     $("groupsOut").innerHTML = html;
   }
 
-  function groupsText() {
-    var lines = [];
-    ["남", "여"].forEach(function (g) {
-      var gs = T.groups && T.groups[g]; if (!gs) return;
-      gs.forEach(function (grp, i) { lines.push(g + " " + (i + 1) + "모둠: " + grp.map(function (p) { return p.name + "(" + TYPES[p.type].name + ")"; }).join(", ")); });
-    });
-    return lines.join("\n");
-  }
+  /* LOCK & NAVIGATION */
+  function showView(view) {
+    if (view === "teacher" && !isTeacherUnlocked) {
+      openModal();
+      return;
+    }
+    var isTeacher = view === "teacher";
+    $("studentView").hidden = isTeacher;
+    $("teacherView").hidden = !isTeacher;
+    $("shell").classList.toggle("wide", isTeacher);
+    $("tabStudent").setAttribute("aria-pressed", String(!isTeacher));
+    $("tabTeacher").setAttribute("aria-pressed", String(isTeacher));
 
-  function copyText() {
-    var txt = groupsText(), btn = $("copyBtn");
-    function done(ok) { btn.textContent = ok ? "복사했어요" : "아래에서 직접 복사하세요"; setTimeout(function () { btn.textContent = "텍스트로 복사"; }, 1800); }
-    try { navigator.clipboard.writeText(txt).then(function () { done(true); }, function () { fallback(); }); } catch (e) { fallback(); }
-    function fallback() {
-      var ta = document.createElement("textarea"); ta.className = "input"; ta.value = txt; ta.setAttribute("aria-label", "복사할 모둠 목록");
-      $("groupsOut").appendChild(ta); ta.select(); done(false);
+    if (isTeacher) {
+      fetchResults();
+      subscribeRealtime();
     }
   }
 
-  function subscribe() {
-    if (T.subscribed) return; T.subscribed = true;
-    useDb().then(function (db) {
-      if (!db) { $("syncHint").textContent = "학생 제출 기능을 쓰려면 이 페이지를 계정으로 열어야 해요. 지금은 결과를 직접 넣어서 사용할 수 있어요."; return; }
-      $("syncHint").textContent = "학생이 제출하면 이 목록에 바로 나타납니다.";
-      db.collection("results").onSnapshot(function (snap) {
-        T.remote = snap.docs.map(function (d) { return d.data(); }).filter(function (r) { return r && r.name && r.gender && r.type; });
-        renderRoster();
-      }, function () {});
-    });
+  function openModal() {
+    $("lockModal").hidden = false;
+    $("pwdInput").value = "";
+    $("pwdErr").textContent = "";
+    $("pwdInput").focus();
   }
 
-  /* ---------- wiring ---------- */
-  function show(view) {
-    var teacher = view === "teacher";
-    $("studentView").hidden = teacher; $("teacherView").hidden = !teacher;
-    $("shell").classList.toggle("wide", teacher);
-    $("tabStudent").setAttribute("aria-pressed", String(!teacher));
-    $("tabTeacher").setAttribute("aria-pressed", String(teacher));
-    try { history.replaceState(null, "", teacher ? "#teacher" : "#"); } catch (e) {}
-    if (teacher) { renderRoster(); subscribe(); }
+  function closeModal() {
+    $("lockModal").hidden = true;
   }
-  $("tabStudent").onclick = function () { show("student"); };
-  $("tabTeacher").onclick = function () { show("teacher"); };
+
+  function checkPassword() {
+    var val = $("pwdInput").value;
+    if (val === TEACHER_PWD) {
+      isTeacherUnlocked = true;
+      closeModal();
+      showView("teacher");
+    } else {
+      $("pwdErr").textContent = "비밀번호가 올바르지 않습니다.";
+      $("pwdInput").value = "";
+      $("pwdInput").focus();
+    }
+  }
+
+  $("tabStudent").onclick = function () { showView("student"); };
+  $("tabTeacher").onclick = function () { showView("teacher"); };
+  $("lockBtn").onclick = function () {
+    isTeacherUnlocked = false;
+    showView("student");
+  };
+
+  $("pwdSubmit").onclick = checkPassword;
+  $("pwdCancel").onclick = closeModal;
+  $("pwdInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") checkPassword();
+  });
 
   $("addOne").onclick = function () {
-    var n = $("addName").value.trim().replace(/\s+/g, ""); if (!n) { $("addName").focus(); return; }
+    var n = $("addName").value.trim().replace(/\s+/g, ""); if (!n) return;
     upsertManual([{ name: n, gender: $("addGender").value, type: $("addType").value }]);
-    $("addName").value = ""; $("addName").focus();
+    $("addName").value = "";
   };
-  $("addName").addEventListener("keydown", function (e) { if (e.key === "Enter") $("addOne").click(); });
   $("addMany").onclick = function () {
-    var res = parseLines($("pasteBox").value);
-    if (res.rows.length) upsertManual(res.rows);
+    var rows = parseLines($("pasteBox").value);
+    if (rows.length) upsertManual(rows);
     $("pasteBox").value = "";
-    $("pasteBox").placeholder = res.rows.length + "명 추가" + (res.bad ? " · 읽지 못한 줄 " + res.bad + "개" : "");
   };
-  $("friendBox").value = T.friends;
-  $("makeBtn").onclick = build;
-  $("reshuffle").onclick = build;
-  $("copyBtn").onclick = copyText;
 
-  newOrder(); renderStudent();
-  if (location.hash === "#teacher") show("teacher");
+  $("makeBtn").onclick = buildGroups;
+  $("reshuffle").onclick = buildGroups;
+
+  newOrder();
+  renderStudent();
 })();
 </script>
+</body>
+</html>
